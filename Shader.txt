@@ -6,24 +6,20 @@ float fmod(float a, float b)
 void drawGrid(out vec4 fragColor, in vec2 fragCoord)
 {
     float v = fragCoord.y / iResolution.y;
-    float v1 = 0.5f * (1.0f + sin(v + 0.5f * iTime + sin(v + iTime)));
-    float v2 = 0.5f * (1.0f + sin(v + 0.6f * iTime - sin(v)));
+    float v1 = 0.5f * (1.0f + sin(v + 2.0f * iTime + sin(v + 10.0f * iTime)));
+    float v2 = 0.5f * (1.0f + sin(v + 3.0f * iTime - sin(v)));
     float u = fragCoord.x / iResolution.x;
-    float u1 = 0.5f * (1.0f + sin(u + 0.6f * iTime - sin(u)));
+    float u1 = 0.5f * (1.0f + sin(u + 4.0f * iTime - sin(u)));
     fragColor = vec4(0.0, u1 * v1, v2, 1.0);
 }
 
 void drawCircle(out vec4 fragColor, in vec2 localCoord)
 {
-    fragColor = vec4(0.5f * (localCoord.x + 1.0f), 0.5f * (localCoord.y + 1.0f), 0.5f * (1.0f + sin(iTime)), 1.0);
+    fragColor = vec4(0.5f * (localCoord.x + 1.0f), 0.5f * (localCoord.y + 1.0f) * 0.5f * (1.0f + cos(iTime)), 0.5f * (1.0f + sin(iTime)), 1.0);
 }
 
-void drawBKG(out vec4 fragColor, in vec2 fragCoord)
+bool drawIfInCircle(out vec4 fragColor, in vec2 fragCoord, in float radius, in vec2 center)
 {
-    const float speed = 60.0f;
-    float radius = 100.0f + 100.0f * sin(2.0f * iTime);
-    vec2 center = vec2(0.0f, 200.0f) + speed * iTime * vec2(2.5f, 1.0f);
-    
     center.x = fmod(center.x, iResolution.x);
     float minX = fmod(center.x - radius, iResolution.x);
     float maxX = fmod(center.x + radius, iResolution.x);
@@ -92,11 +88,41 @@ void drawBKG(out vec4 fragColor, in vec2 fragCoord)
     if (deltaX * deltaX + deltaY * deltaY <= radius * radius)
     {
         drawCircle(fragColor, vec2(deltaX, deltaY) / radius);
+        return true;
     }
     else
     {
-        fragColor = vec4(1.0, 0.0, 0.0, 1.0);
+        return false;
     }
+}
+
+
+void drawBKG(out vec4 fragColor, in vec2 fragCoord)
+{
+    float radius;
+    vec2 center;
+    
+    radius = 100.0f * (1.0f + sin(2.0f * iTime));
+    center = vec2(0.0f, 200.0f) + 60.0f * iTime * vec2(2.5f, 1.0f);
+    if (drawIfInCircle(fragColor, fragCoord, radius, center))
+        return;
+    
+    radius = 50.0f * (1.0f + sin(2.0f * iTime));
+    center = vec2(100.0f, 50.0f) + 30.0f * iTime * vec2(2.0f, 1.0f);
+    if (drawIfInCircle(fragColor, fragCoord, radius, center))
+        return;
+    
+    radius = 30.0f * (1.0f + sin(10.0f * iTime));
+    center = vec2(1000.0f, 500.0f) + 100.0f * iTime * vec2(0.5f, 4.0f);
+    if (drawIfInCircle(fragColor, fragCoord, radius, center))
+        return;
+    
+    radius = 30.0f * (1.0f + sin(10.0f * iTime));
+    center = vec2(1500.0f, 300.0f) + 120.0f * iTime * vec2(0.5f, 5.0f);
+    if (drawIfInCircle(fragColor, fragCoord, radius, center))
+        return;
+    
+    fragColor = vec4(1.0, 0.0, 0.0, 1.0);
 }
 
 void mainImage(out vec4 fragColor, in vec2 fragCoord)
