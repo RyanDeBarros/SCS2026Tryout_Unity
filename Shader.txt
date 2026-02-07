@@ -1,0 +1,123 @@
+float fmod(float a, float b)
+{
+    return a - b * floor(a / b);
+}
+
+void drawGrid(out vec4 fragColor, in vec2 fragCoord)
+{
+    float v = fragCoord.y / iResolution.y;
+    float v1 = 0.5f * (1.0f + sin(v + 0.5f * iTime + sin(v + iTime)));
+    float v2 = 0.5f * (1.0f + sin(v + 0.6f * iTime - sin(v)));
+    float u = fragCoord.x / iResolution.x;
+    float u1 = 0.5f * (1.0f + sin(u + 0.6f * iTime - sin(u)));
+    fragColor = vec4(0.0, u1 * v1, v2, 1.0);
+}
+
+void drawCircle(out vec4 fragColor, in vec2 localCoord)
+{
+    fragColor = vec4(0.5f * (localCoord.x + 1.0f), 0.5f * (localCoord.y + 1.0f), 0.5f * (1.0f + sin(iTime)), 1.0);
+}
+
+void drawBKG(out vec4 fragColor, in vec2 fragCoord)
+{
+    const float speed = 60.0f;
+    float radius = 100.0f + 100.0f * sin(2.0f * iTime);
+    vec2 center = vec2(0.0f, 200.0f) + speed * iTime * vec2(2.5f, 1.0f);
+    
+    center.x = fmod(center.x, iResolution.x);
+    float minX = fmod(center.x - radius, iResolution.x);
+    float maxX = fmod(center.x + radius, iResolution.x);
+    
+    center.y = fmod(center.y, iResolution.y);
+    float minY = fmod(center.y - radius, iResolution.y);
+    float maxY = fmod(center.y + radius, iResolution.y);
+    
+    float deltaX;
+    float deltaY;
+    
+    if (minX < maxX) // circle is not wrapping around
+    {
+        deltaX = fragCoord.x - center.x;
+    }
+    else if (center.x <= maxX) // circle is wrapping to the right
+    {
+        if (fragCoord.x <= maxX)
+        {
+            deltaX = fragCoord.x - center.x;
+        }
+        else
+        {
+            deltaX = fragCoord.x - iResolution.x - center.x;
+        }
+    }
+    else // circle is wrapping to the left
+    {
+        if (fragCoord.x >= minX)
+        {
+            deltaX = fragCoord.x - center.x;
+        }
+        else
+        {
+            deltaX = fragCoord.x + iResolution.x - center.x;
+        }
+    }
+    
+    if (minY < maxY) // circle is not wrapping around
+    {
+        deltaY = fragCoord.y - center.y;
+    }
+    else if (center.y <= maxY) // circle is wrapping to the top
+    {
+        if (fragCoord.y <= maxY)
+        {
+            deltaY = fragCoord.y - center.y;
+        }
+        else
+        {
+            deltaY = fragCoord.y - iResolution.y - center.y;
+        }
+    }
+    else // circle is wrapping to the bottom
+    {
+        if (fragCoord.y >= minY)
+        {
+            deltaY = fragCoord.y - center.y;
+        }
+        else
+        {
+            deltaY = fragCoord.y + iResolution.y - center.y;
+        }
+    }
+    
+    if (deltaX * deltaX + deltaY * deltaY <= radius * radius)
+    {
+        drawCircle(fragColor, vec2(deltaX, deltaY) / radius);
+    }
+    else
+    {
+        fragColor = vec4(1.0, 0.0, 0.0, 1.0);
+    }
+}
+
+void mainImage(out vec4 fragColor, in vec2 fragCoord)
+{
+    const float cellWidth = 50.0f;
+    const float cellHeight = 50.0f;
+    const float gridlineWidth = 10.0f;
+    const float gridlineHeight = 10.0f;
+    
+    float localX = fmod(fragCoord.x, cellWidth);
+    float localY = fmod(fragCoord.y, cellHeight);
+    
+    bool inCellX = localX > 0.5f * gridlineWidth && (cellWidth - localX > 0.5f * gridlineWidth);
+    bool inCellY = localY > 0.5f * gridlineHeight && (cellHeight - localY > 0.5f * gridlineHeight);
+    
+    if (inCellX && inCellY)
+    {
+        drawBKG(fragColor, fragCoord);
+    }
+    else
+    {
+        drawGrid(fragColor, fragCoord);
+    }
+}
